@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>💰</title>
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" type="image/png" href="icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="💰">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="format-detection" content="telephone=no">
+<style>
+  :root{
+    --bg:#f2f2f7; --card:#fff; --tx:#000; --mut:rgba(60,60,67,.6); --sep:rgba(60,60,67,.18);
+    --fill:rgba(118,118,128,.12); --seg-on:#fff; --ac:#007aff; --red:#ff3b30; --grn:#34c759;
+    --yel:#fff4cf; --gbg:#e0f6e6;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --bg:#000; --card:#1c1c1e; --tx:#fff; --mut:rgba(235,235,245,.6); --sep:rgba(84,84,88,.65);
+    --fill:rgba(118,118,128,.24); --seg-on:#636366; --ac:#0a84ff; --red:#ff453a; --grn:#30d158;
+    --yel:#3a3310; --gbg:#10301b;
+  }}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0}
+  body{
+    min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;
+    padding:max(14px,env(safe-area-inset-top)) 16px calc(14px + env(safe-area-inset-bottom));
+    background:var(--bg);color:var(--tx);
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Helvetica Neue",sans-serif;
+    font-size:17px;letter-spacing:-.01em;-webkit-font-smoothing:antialiased;
+    font-variant-numeric:tabular-nums;
+  }
+  button,input,select{font-family:inherit;letter-spacing:inherit;font-variant-numeric:inherit}
+  .ic{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+  #app{display:none;flex:1;flex-direction:column;gap:12px}
+  #login{display:none;flex:1;flex-direction:column;justify-content:center;gap:14px;max-width:400px;width:100%;margin:0 auto}
+  #login .logo{font-size:64px;text-align:center;line-height:1;margin-bottom:6px}
+
+  /* плитки */
+  .bal{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+  .t{background:var(--card);border-radius:14px;padding:9px 4px 8px;text-align:center;min-width:0;cursor:default}
+  .t small{display:flex;align-items:center;justify-content:center;gap:3px;color:var(--mut);font-size:11px;font-weight:500;white-space:nowrap}
+  .t small .ic{width:10px;height:10px;stroke-width:2.4}
+  .t b{display:block;margin-top:1px;font-size:17px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .t.yel{background:var(--yel)}
+  .t.grn{background:var(--gbg)}
+  .t.edit{cursor:pointer}
+  .t.active{box-shadow:inset 0 0 0 2px var(--ac)}
+
+  .metaRow{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:-4px}
+  #metaText{color:var(--mut);font-size:13px}
+  #refresh{width:26px;height:26px;border:0;border-radius:50%;background:var(--fill);color:var(--ac);padding:0;display:flex;align-items:center;justify-content:center}
+  #refresh .ic{width:14px;height:14px}
+  #refresh.spin .ic{animation:sp .8s linear infinite}
+
+  /* сгруппированные строки */
+  .group{background:var(--card);border-radius:14px;overflow:hidden}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;padding:0 16px}
+  .row + .row{border-top:.5px solid var(--sep)}
+  .row .l{color:var(--tx);white-space:nowrap}
+  .row input,.row select{border:0;background:transparent;color:var(--tx);height:46px;font-size:17px;padding:0;outline:none;min-width:0}
+  .row select{-webkit-appearance:none;appearance:none;flex:1;text-align:right;text-align-last:right;direction:ltr;color:var(--ac)}
+  .row select.empty{color:var(--mut)}
+  .row .chev{color:var(--mut);width:13px;height:13px;stroke-width:2.4}
+  .row .amt{flex:1;text-align:right;font-size:22px;font-weight:600}
+  .row .amt::placeholder{color:var(--mut);font-weight:400}
+  .row .unit{color:var(--mut);font-size:15px}
+
+  #editRow{display:none}
+  #editRow.open{display:block}
+  #editRow input{flex:1;text-align:right;font-size:20px;font-weight:600}
+  #editOk{border:0;background:none;color:var(--ac);font-size:17px;font-weight:600;padding:0}
+
+  /* сегменты */
+  .seg{display:flex;background:var(--fill);border-radius:9px;padding:2px}
+  .seg button{flex:1;border:0;background:none;color:var(--tx);padding:7px 12px;font-size:14px;font-weight:500;border-radius:7px;white-space:nowrap}
+  .seg button.on{background:var(--seg-on);font-weight:600;box-shadow:0 3px 8px rgba(0,0,0,.12),0 3px 1px rgba(0,0,0,.04)}
+  .row .seg{width:136px}
+  .row .seg button{padding:6px 10px}
+
+  /* главная кнопка */
+  .go{margin-top:auto;width:100%;border:0;background:var(--ac);color:#fff;font-size:17px;font-weight:600;height:52px;border-radius:14px}
+  .go:active{opacity:.85}
+  .go:disabled{opacity:.45}
+  #msg,#lmsg{text-align:center;min-height:18px;font-size:13px;color:var(--grn)}
+  #msg.err,#lmsg.err{color:var(--red)}
+  #login input{width:100%;height:52px;border:0;border-radius:14px;background:var(--card);color:var(--tx);font-size:17px;padding:0 16px;text-align:center;outline:none}
+  #login .go{margin-top:0}
+
+  /* нижняя панель */
+  .bwrap{position:relative}
+  .bottom{display:flex;gap:8px}
+  .bottom button{flex:1;height:44px;border:0;border-radius:12px;background:var(--fill);color:var(--ac);font-size:15px;font-weight:500;
+                 display:flex;align-items:center;justify-content:center;gap:6px;padding:0 8px;white-space:nowrap}
+  .bottom button:active{opacity:.7}
+  .bottom button:disabled{opacity:.4}
+  #hist{display:none;position:absolute;left:0;right:0;bottom:100%;margin-bottom:8px;max-height:44vh;overflow:auto;
+        background:var(--card);border-radius:14px;z-index:5;box-shadow:0 8px 30px rgba(0,0,0,.2)}
+  #hist.open{display:block}
+  #hist .it{padding:10px 16px;font-size:15px}
+  #hist .it + .it{border-top:.5px solid var(--sep)}
+  #hist .it small{display:block;color:var(--mut);font-size:12px;margin-bottom:1px}
+  #hist .empty{padding:16px;text-align:center;color:var(--mut);font-size:15px}
+  #histBtn .ic{width:13px;height:13px;stroke-width:2.4}
+
+  /* загрузка */
+  #loader{display:none;position:fixed;inset:0;z-index:20;align-items:center;justify-content:center}
+  #loader .hud{width:84px;height:84px;border-radius:18px;background:rgba(60,60,67,.72);
+               -webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);display:flex;align-items:center;justify-content:center}
+  .spinner{width:34px;height:34px;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .8s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+  <!-- ВХОД -->
+  <div id="login">
+    <form id="lf" style="display:contents" autocomplete="on">
+      <div class="logo">💰</div>
+      <input id="user" name="username" type="text" autocomplete="username" value="money" tabindex="-1" aria-hidden="true"
+             style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none">
+      <input id="pw" name="password" type="password" autocomplete="current-password" placeholder="Пароль">
+      <button class="go" id="loginBtn" type="submit">Войти</button>
+      <div id="lmsg"></div>
+    </form>
+  </div>
+
+  <!-- ПРИЛОЖЕНИЕ -->
+  <div id="app">
+    <div class="bal">
+      <div class="t"><small>Наличка</small><b id="b-cash">…</b></div>
+      <div class="t edit" data-edit="card"><small>Карта<svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></small><b id="b-card">…</b></div>
+      <div class="t yel"><small>Всего</small><b id="b-total">…</b></div>
+      <div class="t grn edit" data-edit="saved"><small>Отложено<svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></small><b id="b-saved">…</b></div>
+    </div>
+
+    <div class="metaRow">
+      <span id="metaText"></span>
+      <button id="refresh" aria-label="Обновить"><svg class="ic" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.34-5.66M20 4v5h-5"/></svg></button>
+    </div>
+
+    <div class="group" id="editRow">
+      <div class="row">
+        <span class="l" id="editLbl"></span>
+        <input id="editInput" type="number" inputmode="numeric" step="1" placeholder="0">
+        <button id="editOk">Готово</button>
+      </div>
+    </div>
+
+    <div class="seg" id="type">
+      <button data-v="expense" class="on">Расходы</button>
+      <button data-v="income">Доходы</button>
+    </div>
+
+    <div class="group">
+      <div class="row">
+        <span class="l">Категория</span>
+        <select id="cat" class="empty"></select>
+        <svg class="ic chev" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg>
+      </div>
+      <div class="row">
+        <span class="l">Сумма</span>
+        <input class="amt" id="amount" type="number" inputmode="numeric" step="1" min="1" placeholder="0">
+        <span class="unit">BYN</span>
+      </div>
+      <div class="row" id="srcBox">
+        <span class="l">Оплата</span>
+        <div class="seg" id="source">
+          <button data-v="cash" class="on">НАЛ</button>
+          <button data-v="card">Б/Н</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="msg"></div>
+    <button class="go" id="go">Записать</button>
+
+    <div class="bwrap">
+      <div id="hist"></div>
+      <div class="bottom">
+        <button id="undo"><svg class="ic" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3"/></svg>Отменить последнее</button>
+        <button id="histBtn">Последние 10<svg class="ic" viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></svg></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="loader"><div class="hud"><div class="spinner"></div></div></div>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const st = { type: 'expense', source: 'cash', data: null, saved: 0, card: 0, edit: null };
+  let DEV = null;
+  const num = n => new Intl.NumberFormat('ru-RU').format(n);
+
+  function lsGet(){ try { return localStorage.getItem('dev'); } catch(e){ return null; } }
+  function lsSet(v){ try { v === null ? localStorage.removeItem('dev') : localStorage.setItem('dev', v); } catch(e){} }
+
+  // «Запомнить устройство»: ключ хранится только в памяти браузера, в адрес страницы не попадает
+  function remember(v){ lsSet(v); }
+  function forget(){ lsSet(null); }
+
+  function loader(on){ $('loader').style.display = on ? 'flex' : 'none'; $('refresh').classList.toggle('spin', on); }
+  function view(n){ $('login').style.display = n === 'login' ? 'flex' : 'none'; $('app').style.display = n === 'app' ? 'flex' : 'none'; }
+  function msg(t, err){ $('msg').textContent = t; $('msg').className = err ? 'err' : ''; }
+  function lmsg(t, err){ $('lmsg').textContent = t; $('lmsg').className = err ? 'err' : ''; }
+
+  // Адрес веб-приложения Apps Script (заканчивается на /exec) — вставьте свой
+  const API_URL = 'https://script.google.com/macros/s/AKfycbzwf4k6-TB1s-trM65YuMjDwmXpnmGBPBDEZgBcP1E3BthB0dy2bWV7tNKBvGEepcSTuA/exec';
+
+  // вызов сервера; при потере доступа — возврат на экран входа
+  function srv(name, args, ok, onErr){
+    const fail = e => {
+      loader(false);
+      const m = (e && e.message) || 'Ошибка';
+      if (m.indexOf('AUTH') >= 0) { forget(); DEV = null; view('login'); lmsg('Войдите заново'); return; }
+      (onErr || (x => msg(m, true)))(e);
+    };
+    fetch(API_URL, { method: 'POST', body: JSON.stringify({ fn: name, args: args }) })
+      .then(r => r.json())
+      .then(j => { if (j.ok) ok(j.data); else fail(new Error(j.error)); },
+            () => fail(new Error('Нет соединения')));
+  }
+
+  function showBal(b){
+    $('b-cash').textContent = num(b.cash);
+    $('b-card').textContent = num(b.card);
+    $('b-total').textContent = num(b.total);
+    $('b-saved').textContent = num(b.saved);
+    st.card = b.card; st.saved = b.saved;
+  }
+
+  function fmtTs(ts){
+    return new Date(ts).toLocaleString('ru-RU', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+  }
+  function renderHist(h){
+    const box = $('hist'); box.innerHTML = '';
+    if (!h.length) { box.innerHTML = '<div class="empty">Пока нет действий</div>'; }
+    h.forEach(x => {
+      const d = document.createElement('div'); d.className = 'it';
+      const s = document.createElement('small'); s.textContent = fmtTs(x.ts);
+      const t = document.createElement('span'); t.textContent = x.label;
+      d.appendChild(s); d.appendChild(t); box.appendChild(d);
+    });
+    $('undo').disabled = !h.length;
+  }
+  function applyState(s){ showBal(s.balances); renderHist(s.history); }
+
+  function renderCats(){
+    const sel = $('cat'), prev = sel.value; sel.innerHTML = '';
+    const ph = document.createElement('option');
+    ph.value = ''; ph.textContent = 'Выбрать'; ph.disabled = true; ph.selected = true;
+    sel.appendChild(ph);
+    (st.data[st.type] || []).forEach(name => {
+      const o = document.createElement('option'); o.value = name; o.textContent = name; sel.appendChild(o);
+    });
+    if (prev && (st.data[st.type] || []).indexOf(prev) >= 0) sel.value = prev;
+    sel.classList.toggle('empty', !sel.value);
+  }
+  $('cat').addEventListener('change', () => $('cat').classList.toggle('empty', !$('cat').value));
+
+  function load(){
+    loader(true);
+    srv('getInit', [DEV], d => {
+      st.data = d; applyState(d);
+      $('metaText').textContent = 'Лист: ' + d.sheetName + ' · BYN';
+      renderCats(); view('app'); loader(false);
+    }, e => { view('app'); msg((e && e.message) || 'Ошибка загрузки', true); });
+  }
+
+  function seg(id, key, after){
+    $(id).querySelectorAll('button').forEach(b => b.onclick = () => {
+      $(id).querySelectorAll('button').forEach(x => x.classList.remove('on'));
+      b.classList.add('on'); st[key] = b.dataset.v; after && after();
+    });
+  }
+  seg('type', 'type', () => {
+    $('srcBox').style.display = st.type === 'expense' ? 'flex' : 'none';
+    if (st.data) { $('cat').value = ''; renderCats(); }
+    msg('');
+  });
+  seg('source', 'source');
+
+  // запись
+  $('go').onclick = () => {
+    const cat = $('cat').value, a = Number($('amount').value);
+    if (!cat) { msg('Выберите категорию', true); return; }
+    if (!Number.isInteger(a) || a <= 0) { msg('Введите сумму — целое число BYN', true); return; }
+    $('go').disabled = true; msg('Записываю…');
+    srv('addEntry', [DEV, st.type, cat, a, st.source], s => {
+      applyState(s); $('amount').value = ''; $('cat').value = ''; $('cat').classList.add('empty');
+      $('go').disabled = false; msg('Готово');
+    }, e => { $('go').disabled = false; msg((e && e.message) || 'Ошибка', true); });
+  };
+
+  // правка Карта / Отложено
+  function closeEdit(){ st.edit = null; $('editRow').classList.remove('open'); document.querySelectorAll('.t.edit').forEach(t => t.classList.remove('active')); }
+  document.querySelectorAll('.t.edit').forEach(t => t.onclick = () => {
+    const w = t.dataset.edit;
+    if (st.edit === w) { closeEdit(); return; }
+    closeEdit(); st.edit = w; t.classList.add('active');
+    $('editLbl').textContent = w === 'card' ? 'Карта' : 'Отложено';
+    $('editInput').value = w === 'card' ? st.card : st.saved;
+    $('editRow').classList.add('open'); $('editInput').focus();
+  });
+  $('editOk').onclick = () => {
+    const v = Number($('editInput').value);
+    if ($('editInput').value === '' || !Number.isInteger(v)) { msg('Введите целое число BYN', true); return; }
+    msg('Сохраняю…');
+    srv('setCell', [DEV, st.edit, v], s => { applyState(s); closeEdit(); msg('Обновлено'); });
+  };
+
+  // обновить
+  $('refresh').onclick = () => { msg(''); load(); };
+
+  // отмена и история
+  $('undo').onclick = () => {
+    $('undo').disabled = true; msg('Отменяю…');
+    srv('undoLast', [DEV], s => { applyState(s); msg('Отменено: ' + s.undone); },
+        e => { msg((e && e.message) || 'Ошибка', true); $('undo').disabled = false; });
+  };
+  $('histBtn').onclick = () => $('hist').classList.toggle('open');
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.bwrap')) $('hist').classList.remove('open');
+  });
+
+  // вход
+  function doLogin(){
+    const pw = $('pw').value;
+    if (!pw) { lmsg('Введите пароль', true); return; }
+    $('loginBtn').disabled = true; lmsg('Проверяю…');
+    srv('login', [pw], dev => {
+      DEV = dev; remember(dev); $('pw').value = ''; $('loginBtn').disabled = false; lmsg(''); load();
+    }, e => { $('loginBtn').disabled = false; lmsg((e && e.message) || 'Ошибка', true); });
+  }
+  $('lf').addEventListener('submit', e => { e.preventDefault(); doLogin(); });
+
+  // старт: если устройство уже входило — сразу в приложение
+  DEV = lsGet();
+  if (DEV) { load(); } else { view('login'); }
+</script>
+</body>
+</html>
