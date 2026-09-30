@@ -218,9 +218,13 @@
       (onErr || (x => msg(m, true)))(e);
     };
     fetch(API_URL, { method: 'POST', body: JSON.stringify({ fn: name, args: args }) })
-      .then(r => r.json())
-      .then(j => { if (j.ok) ok(j.data); else fail(new Error(j.error)); },
-            () => fail(new Error('Нет соединения')));
+      .then(r => r.text())
+      .then(t => {
+        let j;
+        try { j = JSON.parse(t); }
+        catch (e) { fail(new Error('Сервер ответил не так, как ожидалось. Проверьте развертывание: доступ «Все» и новая версия')); return; }
+        if (j.ok) ok(j.data); else fail(new Error(j.error));
+      }, () => fail(new Error('Нет соединения с сервером. Проверьте адрес /exec и доступ «Все»')));
   }
 
   function showBal(b){
